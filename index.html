@@ -1,59 +1,369 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CAD Kernel Timeline</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAD Kernel Evolution</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
     <style>
         body {
-            font-family: "Helvetica Neue", sans-serif;
-            margin: 40px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: #f8f9fa;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        .timeline-item {
+            margin: 10px 0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .timeline-item:hover {
+            transform: translateX(5px);
+        }
+        .year {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-right: 15px;
+            color: #2c3e50;
         }
         .event {
-            margin-bottom: 12px;
-            padding: 12px;
-            border-left: 6px solid #ccc;
-            background: #f9f9f9;
-            border-radius: 6px;
+            color: #34495e;
+            line-height: 1.4;
         }
-        .event h4 {
-            margin: 0;
-            font-size: 18px;
-        }
-        .event .date {
-            font-size: 13px;
-            color: #888;
-        }
-        .badge {
+        .kernel-badge {
             display: inline-block;
-            padding: 2px 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: white;
+            margin-left: 10px;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: #ecf0f1;
+            border-radius: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        #sankey {
+            margin: 20px 0;
+        }
+        .sankey-link {
+            fill: none;
+            stroke-opacity: 0.6;
+        }
+        .sankey-link:hover {
+            stroke-opacity: 0.8;
+        }
+        .sankey-node rect {
+            cursor: move;
+            fill-opacity: 0.9;
+            shape-rendering: crispEdges;
+        }
+        .sankey-node text {
+            pointer-events: none;
+            text-shadow: 0 1px 0 #fff;
             font-size: 12px;
-            color: #fff;
-            border-radius: 12px;
-            margin-right: 8px;
+            font-weight: bold;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #ecf0f1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .tab.active {
+            background: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <h2>CAD Kernel Timeline</h2>
-    <div id="timeline"></div>
+    <div class="container">
+        <h1>CAD Kernel Evolution: Timeline</h1>
+        
+        <div id="timeline-tab" class="tab-content active">
+            <div class="section">
+                <h2>Color-Coded Timeline</h2>
+                <div class="legend" id="legend"></div>
+                <div class="timeline" id="timeline"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const data = [{'date': '1969-01-01', 'headline': 'CAD Group with Ian Braid, Alan Grayer, and Charles Lang works on BUILD prototype', 'text': 'CAD Group with Ian Braid, Alan Grayer, and Charles Lang works on BUILD prototype', 'group': 'Romulus', 'color': 'Light Yellow'}, {'date': '1969-01-01', 'headline': 'Launch of CADDS', 'text': 'Launch of CADDS-1 by Computervision (CV) - 3D Wireframe-only', 'group': 'CADDS', 'color': 'Peach'}, {'date': '1974-01-01', 'headline': 'Shape Data, Ltd created and works on ROMULUS in FORTRAN based on BUILD', 'text': 'Shape Data, Ltd created and works on ROMULUS in FORTRAN based on BUILD', 'group': 'Romulus', 'color': 'Light Yellow'}, {'date': '1979-01-01', 'headline': 'Matra buys Datavision and starts selling Euclid', 'text': 'Matra buys Datavision and starts selling Euclid-IS solid modeling 3D CAD', 'group': 'Open Cascade', 'color': 'Aqua'}, {'date': '1981-01-01', 'headline': 'Shape Data acquired by Evans & Sutherland (E&S)', 'text': 'Shape Data acquired by Evans & Sutherland (E&S)', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1981-01-01', 'headline': 'Launch of CATIA V1 by Dassault Systèmes (2D and 3D Wireframe)', 'text': 'Launch of CATIA V1 by Dassault Systèmes (2D and 3D Wireframe)', 'group': 'Pre-CGM', 'color': '#ccc'}, {'date': '1982-01-01', 'headline': 'Launch of CV CADDS4X with direct 3D modeling and proprietary kernel', 'text': 'Launch of CV CADDS4X with direct 3D modeling and proprietary kernel', 'group': 'CADDS', 'color': 'Peach'}, {'date': '1985-01-01', 'headline': 'Launch of Parasolid by ShapeData', 'text': 'Launch of Parasolid by ShapeData', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1985-01-01', 'headline': 'Three', 'text': 'Three-Space, Ltd (Spatial is a major investor)', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1985-01-01', 'headline': 'Launch of CV CADDS5 with proprietary kernel with both direct and parametric mode', 'text': 'Launch of CV CADDS5 with proprietary kernel with both direct and parametric modeling (separate executables)', 'group': 'CADDS', 'color': 'Peach'}, {'date': '1986-01-01', 'headline': 'Launch of CATIA V3 with 3D solids with proprietary kernel, SolidM', 'text': 'Launch of CATIA V3 with 3D solids with proprietary kernel, SolidM', 'group': 'Pre-CGM', 'color': '#ccc'}, {'date': '1986-01-01', 'headline': 'Launch of HP ME30 based on ROMULUS', 'text': 'Launch of HP ME30 based on ROMULUS', 'group': 'Romulus', 'color': 'Light Yellow'}, {'date': '1988-01-01', 'headline': "Launch of Pro/ENGINEER based on proprietary 'Granite' geometry engine", 'text': "Launch of Pro/ENGINEER based on proprietary 'Granite' geometry engine", 'group': 'Granite', 'color': 'Light Gray'}, {'date': '1989-01-01', 'headline': 'Launch of ACIS 1', 'text': 'Launch of ACIS 1.0 by Three-Space', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1989-01-01', 'headline': 'HP licenses ACIS from Spatial for HP ME30', 'text': 'HP licenses ACIS from Spatial for HP ME30', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1990-01-01', 'headline': 'Acquisition of Parasolid by EDS Unigraphics', 'text': 'Acquisition of Parasolid by EDS Unigraphics', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1990-01-01', 'headline': 'Launch of CATIA V4 with proprietary kernel, SolidE', 'text': 'Launch of CATIA V4 with proprietary kernel, SolidE', 'group': 'Pre-CGM', 'color': '#ccc'}, {'date': '1994-01-01', 'headline': 'HP ME30 becomes SolidDesigner switching to the ACIS kernel', 'text': 'HP ME30 becomes SolidDesigner switching to the ACIS kernel', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1994-01-01', 'headline': 'Launch of AutoCAD 3D Solids Release 13', 'text': 'Launch of AutoCAD 3D Solids Release 13', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1995-01-01', 'headline': 'Launch of Solidworks by ex', 'text': 'Launch of Solidworks by ex-PTCs Jon Hirschtick and Mike Payne', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1996-01-01', 'headline': 'Launch of Solid Edge by Intergraph', 'text': 'Launch of Solid Edge by Intergraph', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1997-01-01', 'headline': 'SolidDesigner and ME10 become CoCreate products under HP spinout', 'text': 'SolidDesigner and ME10 become CoCreate products under HP spinout', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1997-01-01', 'headline': 'AutoCAD Architecture (Architectural Desktop) adds 3D modeling', 'text': 'AutoCAD Architecture (Architectural Desktop) adds 3D modeling', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1998-01-01', 'headline': 'Autodesk acquires Vision* and releases Inventor using ACIS', 'text': 'Autodesk acquires Vision* and releases Inventor using ACIS', 'group': 'ShapeManager', 'color': 'Lavender'}, {'date': '1998-01-01', 'headline': 'Dassault acquires SolidWorks', 'text': 'Dassault acquires SolidWorks', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1999-01-01', 'headline': 'Spatial acquired by Dassault Systèmes (ACIS becomes DS technology)', 'text': 'Spatial acquired by Dassault Systèmes (ACIS becomes DS technology)', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '2001-01-01', 'headline': 'Autodesk forks ACIS into ShapeManager for Inventor', 'text': 'Autodesk forks ACIS into ShapeManager for Inventor', 'group': 'ShapeManager', 'color': 'Lavender'}, {'date': '2001-01-01', 'headline': 'CoCreate Modeling 2001 released using ACIS', 'text': 'CoCreate Modeling 2001 released using ACIS', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '2007-01-01', 'headline': 'PTC acquires CoCreate', 'text': 'PTC acquires CoCreate', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '2007-01-01', 'headline': 'Dassault releases CATIA V5R17 using CGM kernel in production', 'text': 'Dassault releases CATIA V5R17 using CGM kernel in production', 'group': 'CGM', 'color': 'Light Red'}, {'date': '2008-01-01', 'headline': 'Siemens acquires UGS and Parasolid', 'text': 'Siemens acquires UGS and Parasolid', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '2010-01-01', 'headline': 'PTC launches Creo to replace Pro/ENGINEER and CoCreate', 'text': 'PTC launches Creo to replace Pro/ENGINEER and CoCreate', 'group': 'Granite', 'color': 'Light Gray'}, {'date': '2011-01-01', 'headline': 'Dassault introduces 3DEXPERIENCE platform using CGM', 'text': 'Dassault introduces 3DEXPERIENCE platform using CGM', 'group': 'CGM', 'color': 'Light Red'}, {'date': '2012-01-01', 'headline': 'Autodesk Fusion 360 beta launches using ShapeManager', 'text': 'Autodesk Fusion 360 beta launches using ShapeManager', 'group': 'ShapeManager', 'color': 'Lavender'}, {'date': '2015-01-01', 'headline': 'Fusion 360 transitions to Parasolid kernel', 'text': 'Fusion 360 transitions to Parasolid kernel', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '2020-01-01', 'headline': 'SolidWorks xDesign uses CGM instead of Parasolid', 'text': 'SolidWorks xDesign uses CGM instead of Parasolid', 'group': 'CGM', 'color': 'Light Red'}, {'date': '2025-01-01', 'headline': 'SpaceClaim switches from ACIS to Parasolid', 'text': 'SpaceClaim switches from ACIS to Parasolid', 'group': 'Parasolid', 'color': 'Light Blue'}];
+        // Color scheme for different kernels
+        const kernelColors = {
+    'Romulus': '#27ae60',
+    'Parasolid': '#2ecc71',
+    'ACIS': '#1abc9c',
+    'ShapeManager (ACIS-fork)': '#16a085',
+    'Granite': '#8e44ad',
+    'CGM': '#2980b9',
+    'Pre-CGM': '#3498db',
+    'CADDS': '#8e5a2b',
+	'Open Cascade': '#f9a825',
+	'SolidDesigner (ACIS-fork)': '#006d77'
+};
 
-        const container = d3.select("#timeline");
+        // Timeline data
+        const timelineData = [
+    {year: 1969, event: "CAD Group with Ian Braid, Alan Grayer, and Charles Lang works on BUILD prototype", kernel: "Romulus"},
+    {year: 1969, event: "Launch of CADDS-1 by Computervision (CV) - 3D Wireframe-only", kernel: "CADDS"},
+    {year: 1974, event: "Shape Data, Ltd created and works on ROMULUS in FORTRAN based on BUILD", kernel: "Romulus"},
+    {year: 1979, event: "Matra buys Datavision and starts selling Euclid-IS solid modeling 3D CAD", kernel: "Open Cascade"},
+    {year: 1981, event: "Shape Data acquired by Evans & Sutherland (E&S)", kernel: "Parasolid"},
+    {year: 1981, event: "Launch of CATIA V1 by Dassault Systèmes (2D and 3D Wireframe)", kernel: "Pre-CGM"},
+    {year: 1982, event: "Launch of CV CADDS4X with direct 3D modeling and proprietary kernel", kernel: "CADDS"},
+    {year: 1985, event: "Launch of Parasolid by ShapeData", kernel: "Parasolid"},
+    {year: 1985, event: "Three-Space, Ltd (Spatial is a major investor)", kernel: "ACIS"},
+    {year: 1985, event: "Launch of CV CADDS5 with proprietary kernel with both direct and parametric modeling (separate executables)", kernel: "CADDS"},
+    {year: 1986, event: "Launch of CATIA V3 with 3D solids with proprietary kernel, SolidM", kernel: "Pre-CGM"},
+	{year: 1986, event: "Launch of HP ME30 based on ROMULUS", kernel: "Romulus"},	
+    {year: 1988, event: "Launch of Pro/ENGINEER based on proprietary 'Granite' geometry engine", kernel: "Granite"},
+    {year: 1989, event: "Launch of ACIS 1.0 by Three-Space", kernel: "ACIS"},
+    {year: 1989, event: "HP licenses ACIS from Spatial for HP ME30", kernel: "ACIS"},
+    {year: 1990, event: "Acquisition of Parasolid by EDS Unigraphics", kernel: "Parasolid"},
+    {year: 1990, event: "Launch of CATIA V4 with proprietary kernel, SolidE", kernel: "Pre-CGM"},
+    {year: 1994, event: "HP ME30 becomes SolidDesigner switching to the ACIS kernel", kernel: "ACIS"},
+    {year: 1994, event: "Launch of AutoCAD 3D Solids Release 13", kernel: "ACIS"},
+    {year: 1995, event: "Launch of Solidworks by ex-PTCs Jon Hirschtick and Mike Payne", kernel: "Parasolid"},
+    {year: 1996, event: "Launch of Solid Edge by Intergraph", kernel: "Parasolid"},
+    {year: 1995, event: "HP spinds off CoCreate SolidDesigner into subsidiary", kernel: "ACIS"},
+    {year: 1996, event: "Matra Datavision (MDTV) introduced EUCLID QUANTUM", kernel: "Open Cascade"},		
+    {year: 1997, event: "Acquisition of Solidworks by Dassault Systèmes", kernel: "Parasolid"},
+    {year: 1997, event: "HP forks off its own branch of ACIS for SolidDesigner", kernel: "SolidDesigner (ACIS-fork)"},
+    {year: 1998, event: "Acquisition of Intergraph Solid Edge by EDS Unigraphics", kernel: "Parasolid"},
+    {year: 1998, event: "Acquisition of Three-Space by Spatial", kernel: "ACIS"},
+    {year: 1998, event: "Dassault Systèmes acquires MDTV and integrating the technology of Euclid Styler and Machinist on top of CATIA V5 and DELMIA V5", kernel: "CGM"},	
+    {year: 1998, event: "Acquisition of CV by PTC", kernel: "CADDS"},
+    {year: 1999, event: "Launch of Autodesk Inventor", kernel: "ACIS"},
+    {year: 1999, event: "Launch of CATIA V5 based on CATIA Geometric Modeler (CGM) specifically written for CATIA V5", kernel: "CGM"},
+    {year: 2000, event: "HP spins off its CAD division as Co-Create", kernel: "SolidDesigner (ACIS-fork)"},
+    {year: 2000, event: "Autodesk forks ShapeManager from ACIS source just before DS purchases Spatial", kernel: "ShapeManager (ACIS-fork)"},
+    {year: 2000, event: "Acquisition of Spatial by Dassault Systèmes (DS)", kernel: "ACIS"},
+	{year: 2002, event: "CoCreate rebranded as OneSpace Designer", kernel: "SolidDesigner (ACIS-fork)"},
+    {year: 2003, event: "Spatial (DS) loses lawsuit against Autodesk over ShapeManager fork", kernel: "ShapeManager (ACIS-fork)"},		
+    {year: 2003, event: "Launch of PTC Pro/ENGINEER Wildfire (major UI overhaul)", kernel: "Granite"},
+    {year: 2004, event: "EDS sells PLM Solutions to Private Equity firms Bain, Silverlake, Warburg", kernel: "Parasolid"},
+    {year: 2007, event: "Siemens acquires UGS Corp", kernel: "Parasolid"},
+    {year: 2007, event: "PTC acquires CoCreate SolidDesigner from HP", kernel: "SolidDesigner (ACIS-fork)"},
+    {year: 2007, event: "Launch of SpaceClaim using primarily direct modeling by ex-PTC Mike Payne", kernel: "ACIS"},
+    {year: 2008, event: "Siemens releases Synchronous Technology (direct+parametric) in Parasolid adopted in Solid Edge ST1 and NX 6", kernel: "Parasolid"},
+    {year: 2009, event: "PTC releases Pro/ENGINEER Wildfire 5.0 with Flexible Modeling Extension (FME) for adding direct modeling", kernel: "Granite"},
+    {year: 2010, event: "DS launches DraftSight to counter AutoCAD", kernel: "ACIS"},
+    {year: 2010, event: "DS launches CATIA V6 with PLM integration to ENOVIA V6 (death of 'file-based' CATIA)", kernel: "CGM"},
+    {year: 2010, event: "PTC rebrands the Pro/E CAD product line as Creo Parametric", kernel: "Granite"},
+    {year: 2010, event: "PTC rebrands the CoCreate product line as Creo Elements/Direct Modeling", kernel: "SolidDesigner (ACIS-fork)"},
+    {year: 2011, event: "Commercialization of CGM by Spatial Technologies (DS) led by ex-PTC Mike Payne", kernel: "CGM"},
+    {year: 2013, event: "Final release of CADDS5 V16 - product on life-support ever since", kernel: "CADDS"},
+    {year: 2013, event: "Retirement of Tony Affuso; Chuck Grindstaff becomes Siemens PLM CEO", kernel: "Parasolid"},
+    {year: 2014, event: "SpaceClaim acquired by ANSYS", kernel: "ACIS"},
+    {year: 2014, event: "PTC licenses APIs to Granite kernel for creating Creo Apps", kernel: "Granite"},
+    {year: 2014, event: "Capgemini Engineering acquires Open Cascade after a series of take-overs", kernel: "Open Cascade"},			
+    {year: 2014, event: "Launch of CATIA 3DEXPERIENCE - harmonization of all 3DX apps on-cloud and on-prem", kernel: "CGM"},
+    {year: 2015, event: "Siemens introduces Synchronous Technology 2.0 (enhanced direct modeling in Parasolid)", kernel: "Parasolid"},
+    {year: 2015, event: "Launch of Shapr3D exclusively on iPad", kernel: "Parasolid"},
+    {year: 2015, event: "Launch of Autodesk Fusion 360", kernel: "ShapeManager (ACIS-fork)"},
+    {year: 2016, event: "Launch of OnShape - first cloud-only MCAD by ex-PTC, ex-Solidworks Jon Hirschtick", kernel: "Parasolid"},
+    {year: 2018, event: "PTC acquires Frustum to add generative design to their Granite kernel", kernel: "Granite"},			
+    {year: 2019, event: "Acquisition of Onshape by PTC", kernel: "Parasolid"},
+    {year: 2020, event: "ANSYS expands use of SpaceClaim", kernel: "ACIS"},
+    {year: 2023, event: "Launch of Creo+ alongside Windchill+ in Digital Thread SaaS Portfolio (cloud-only)", kernel: "Granite"},
+    {year: 2024, event: "Launch of Apple Vision Pro featuring Shapr3D", kernel: "Parasolid"},
+    {year: 2025, event: "ANSYS SpaceClaim switches from ACIS to Parasolid", kernel: "Parasolid"},
+    {year: 2025, event: "Launch of Siemens NX X and Solid Edge X as cloud-only", kernel: "Parasolid"},
+    {year: 2025, event: "PTC Onshape 2025 announces US GovCloud support", kernel: "Parasolid"}
+];
 
-        data.forEach(d => {
-            const event = container.append("div").attr("class", "event");
-            event.append("div").attr("class", "date").text(d.date);
-            const h = event.append("h4");
-            h.append("span")
-                .attr("class", "badge")
-                .style("background-color", d.color)
-                .text(d.group);
-            h.append("span").text(" " + d.headline);
-            event.append("p").text(d.text);
-        });
+        // Create legend
+        function createLegend() {
+            const legend = d3.select('#legend');
+            Object.entries(kernelColors).forEach(([kernel, color]) => {
+                const item = legend.append('div').attr('class', 'legend-item');
+                item.append('div')
+                    .attr('class', 'legend-color')
+                    .style('background-color', color);
+                item.append('span').text(kernel);
+            });
+        }
+
+        // Create timeline
+        function createTimeline() {
+            const timeline = d3.select('#timeline');
+            
+            timelineData.forEach(item => {
+                const timelineItem = timeline.append('div')
+                    .attr('class', 'timeline-item')
+                    .style('border-left-color', kernelColors[item.kernel]);
+                
+                const content = timelineItem.append('div');
+                content.append('span')
+                    .attr('class', 'year')
+                    .text(item.year);
+                content.append('span')
+                    .attr('class', 'event')
+                    .text(item.event);
+                content.append('span')
+                    .attr('class', 'kernel-badge')
+                    .style('background-color', kernelColors[item.kernel])
+                    .text(item.kernel);
+            });
+        }
+
+        // Sankey diagram data
+        function createSankey() {
+            // Define nodes and links for the Sankey diagram
+            const nodes = [
+                {name: "BUILD (1969)", kernel: "ROMULUS"},
+                {name: "ROMULUS (1974)", kernel: "ROMULUS"},
+                {name: "Parasolid (1985)", kernel: "Parasolid"},
+                {name: "ACIS (1989)", kernel: "ACIS"},
+                {name: "Granite (1988)", kernel: "Granite"},
+                {name: "CGM (1999)", kernel: "CGM"},
+                {name: "ShapeManager (ACIS-fork) (2000)", kernel: "ShapeManager (ACIS-fork)"},
+                {name: "NURBS (2006)", kernel: "NURBS"}
+            ];
+
+            const links = [
+                {source: 0, target: 1, value: 10}, // BUILD to ROMULUS
+                {source: 1, target: 2, value: 10}, // ROMULUS to Parasolid
+                {source: 3, target: 6, value: 8},  // ACIS to ShapeManager (ACIS-fork)
+                {source: 3, target: 2, value: 5},  // ACIS to Parasolid (SpaceClaim switch)
+                // Market presence flows
+                {source: 2, target: 2, value: 35}, // Parasolid dominance
+                {source: 3, target: 3, value: 25}, // ACIS presence
+                {source: 4, target: 4, value: 5},  // Granite limited
+                {source: 5, target: 5, value: 8},  // CGM presence
+                {source: 6, target: 6, value: 6},  // ShapeManager (ACIS-fork) presence
+            ];
+
+            const width = 1000;
+            const height = 600;
+
+            const svg = d3.select('#sankey')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const sankey = d3.sankey()
+                .nodeWidth(15)
+                .nodePadding(20)
+                .extent([[1, 1], [width - 1, height - 6]]);
+
+            const {nodes: sankeyNodes, links: sankeyLinks} = sankey({
+                nodes: nodes.map(d => Object.assign({}, d)),
+                links: links.map(d => Object.assign({}, d))
+            });
+
+            // Add links
+            svg.append('g')
+                .selectAll('path')
+                .data(sankeyLinks)
+                .join('path')
+                .attr('d', d3.sankeyLinkHorizontal())
+                .attr('stroke', d => kernelColors[d.source.kernel] || '#666')
+                .attr('stroke-width', d => Math.max(1, d.width))
+                .attr('class', 'sankey-link');
+
+            // Add nodes
+            const node = svg.append('g')
+                .selectAll('.sankey-node')
+                .data(sankeyNodes)
+                .join('g')
+                .attr('class', 'sankey-node');
+
+            node.append('rect')
+                .attr('x', d => d.x0)
+                .attr('y', d => d.y0)
+                .attr('height', d => d.y1 - d.y0)
+                .attr('width', d => d.x1 - d.x0)
+                .attr('fill', d => kernelColors[d.kernel] || '#666');
+
+            node.append('text')
+                .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+                .attr('y', d => (d.y1 + d.y0) / 2)
+                .attr('dy', '0.35em')
+                .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
+                .text(d => d.name);
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Initialize
+        createLegend();
+        createTimeline();
+        createSankey();
     </script>
 </body>
 </html>
