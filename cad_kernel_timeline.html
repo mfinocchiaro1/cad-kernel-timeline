@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CAD Kernel Timeline</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: "Helvetica Neue", sans-serif;
+            margin: 40px;
+        }
+        .event {
+            margin-bottom: 12px;
+            padding: 12px;
+            border-left: 6px solid #ccc;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+        .event h4 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .event .date {
+            font-size: 13px;
+            color: #888;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: #fff;
+            border-radius: 12px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h2>CAD Kernel Timeline</h2>
+    <div id="timeline"></div>
+    <script>
+        const data = [{'date': '1969-01-01', 'headline': 'CAD Group with Ian Braid, Alan Grayer, and Charles Lang works on BUILD prototype', 'text': 'CAD Group with Ian Braid, Alan Grayer, and Charles Lang works on BUILD prototype', 'group': 'Romulus', 'color': 'Light Yellow'}, {'date': '1969-01-01', 'headline': 'Launch of CADDS', 'text': 'Launch of CADDS-1 by Computervision (CV) - 3D Wireframe-only', 'group': 'CADDS', 'color': 'Peach'}, {'date': '1974-01-01', 'headline': 'Shape Data, Ltd created and works on ROMULUS in FORTRAN based on BUILD', 'text': 'Shape Data, Ltd created and works on ROMULUS in FORTRAN based on BUILD', 'group': 'Romulus', 'color': 'Light Yellow'}, {'date': '1979-01-01', 'headline': 'Matra buys Datavision and starts selling Euclid', 'text': 'Matra buys Datavision and starts selling Euclid-IS solid modeling 3D CAD', 'group': 'Open Cascade', 'color': 'Aqua'}, {'date': '1981-01-01', 'headline': 'Shape Data acquired by Evans & Sutherland (E&S)', 'text': 'Shape Data acquired by Evans & Sutherland (E&S)', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1981-01-01', 'headline': 'Launch of CATIA V1 by Dassault Systèmes (2D and 3D Wireframe)', 'text': 'Launch of CATIA V1 by Dassault Systèmes (2D and 3D Wireframe)', 'group': 'Pre-CGM', 'color': '#ccc'}, {'date': '1982-01-01', 'headline': 'Launch of CV CADDS4X with direct 3D modeling and proprietary kernel', 'text': 'Launch of CV CADDS4X with direct 3D modeling and proprietary kernel', 'group': 'CADDS', 'color': 'Peach'}, {'date': '1985-01-01', 'headline': 'Launch of Parasolid by ShapeData', 'text': 'Launch of Parasolid by ShapeData', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1985-01-01', 'headline': 'Three', 'text': 'Three-Space, Ltd (Spatial is a major investor)', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1985-01-01', 'headline': 'Launch of CV CADDS5 with proprietary kernel with both direct and parametric mode', 'text': 'Launch of CV CADDS5 with proprietary kernel with both direct and parametric modeling (separate executables)', 'group': 'CADDS', 'color': 'Peach'}, {'date': '1986-01-01', 'headline': 'Launch of CATIA V3 with 3D solids with proprietary kernel, SolidM', 'text': 'Launch of CATIA V3 with 3D solids with proprietary kernel, SolidM', 'group': 'Pre-CGM', 'color': '#ccc'}, {'date': '1986-01-01', 'headline': 'Launch of HP ME30 based on ROMULUS', 'text': 'Launch of HP ME30 based on ROMULUS', 'group': 'Romulus', 'color': 'Light Yellow'}, {'date': '1988-01-01', 'headline': "Launch of Pro/ENGINEER based on proprietary 'Granite' geometry engine", 'text': "Launch of Pro/ENGINEER based on proprietary 'Granite' geometry engine", 'group': 'Granite', 'color': 'Light Gray'}, {'date': '1989-01-01', 'headline': 'Launch of ACIS 1', 'text': 'Launch of ACIS 1.0 by Three-Space', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1989-01-01', 'headline': 'HP licenses ACIS from Spatial for HP ME30', 'text': 'HP licenses ACIS from Spatial for HP ME30', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1990-01-01', 'headline': 'Acquisition of Parasolid by EDS Unigraphics', 'text': 'Acquisition of Parasolid by EDS Unigraphics', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1990-01-01', 'headline': 'Launch of CATIA V4 with proprietary kernel, SolidE', 'text': 'Launch of CATIA V4 with proprietary kernel, SolidE', 'group': 'Pre-CGM', 'color': '#ccc'}, {'date': '1994-01-01', 'headline': 'HP ME30 becomes SolidDesigner switching to the ACIS kernel', 'text': 'HP ME30 becomes SolidDesigner switching to the ACIS kernel', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1994-01-01', 'headline': 'Launch of AutoCAD 3D Solids Release 13', 'text': 'Launch of AutoCAD 3D Solids Release 13', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1995-01-01', 'headline': 'Launch of Solidworks by ex', 'text': 'Launch of Solidworks by ex-PTCs Jon Hirschtick and Mike Payne', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1996-01-01', 'headline': 'Launch of Solid Edge by Intergraph', 'text': 'Launch of Solid Edge by Intergraph', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1997-01-01', 'headline': 'SolidDesigner and ME10 become CoCreate products under HP spinout', 'text': 'SolidDesigner and ME10 become CoCreate products under HP spinout', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1997-01-01', 'headline': 'AutoCAD Architecture (Architectural Desktop) adds 3D modeling', 'text': 'AutoCAD Architecture (Architectural Desktop) adds 3D modeling', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '1998-01-01', 'headline': 'Autodesk acquires Vision* and releases Inventor using ACIS', 'text': 'Autodesk acquires Vision* and releases Inventor using ACIS', 'group': 'ShapeManager', 'color': 'Lavender'}, {'date': '1998-01-01', 'headline': 'Dassault acquires SolidWorks', 'text': 'Dassault acquires SolidWorks', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '1999-01-01', 'headline': 'Spatial acquired by Dassault Systèmes (ACIS becomes DS technology)', 'text': 'Spatial acquired by Dassault Systèmes (ACIS becomes DS technology)', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '2001-01-01', 'headline': 'Autodesk forks ACIS into ShapeManager for Inventor', 'text': 'Autodesk forks ACIS into ShapeManager for Inventor', 'group': 'ShapeManager', 'color': 'Lavender'}, {'date': '2001-01-01', 'headline': 'CoCreate Modeling 2001 released using ACIS', 'text': 'CoCreate Modeling 2001 released using ACIS', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '2007-01-01', 'headline': 'PTC acquires CoCreate', 'text': 'PTC acquires CoCreate', 'group': 'ACIS', 'color': 'Light Green'}, {'date': '2007-01-01', 'headline': 'Dassault releases CATIA V5R17 using CGM kernel in production', 'text': 'Dassault releases CATIA V5R17 using CGM kernel in production', 'group': 'CGM', 'color': 'Light Red'}, {'date': '2008-01-01', 'headline': 'Siemens acquires UGS and Parasolid', 'text': 'Siemens acquires UGS and Parasolid', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '2010-01-01', 'headline': 'PTC launches Creo to replace Pro/ENGINEER and CoCreate', 'text': 'PTC launches Creo to replace Pro/ENGINEER and CoCreate', 'group': 'Granite', 'color': 'Light Gray'}, {'date': '2011-01-01', 'headline': 'Dassault introduces 3DEXPERIENCE platform using CGM', 'text': 'Dassault introduces 3DEXPERIENCE platform using CGM', 'group': 'CGM', 'color': 'Light Red'}, {'date': '2012-01-01', 'headline': 'Autodesk Fusion 360 beta launches using ShapeManager', 'text': 'Autodesk Fusion 360 beta launches using ShapeManager', 'group': 'ShapeManager', 'color': 'Lavender'}, {'date': '2015-01-01', 'headline': 'Fusion 360 transitions to Parasolid kernel', 'text': 'Fusion 360 transitions to Parasolid kernel', 'group': 'Parasolid', 'color': 'Light Blue'}, {'date': '2020-01-01', 'headline': 'SolidWorks xDesign uses CGM instead of Parasolid', 'text': 'SolidWorks xDesign uses CGM instead of Parasolid', 'group': 'CGM', 'color': 'Light Red'}, {'date': '2025-01-01', 'headline': 'SpaceClaim switches from ACIS to Parasolid', 'text': 'SpaceClaim switches from ACIS to Parasolid', 'group': 'Parasolid', 'color': 'Light Blue'}];
+
+        const container = d3.select("#timeline");
+
+        data.forEach(d => {
+            const event = container.append("div").attr("class", "event");
+            event.append("div").attr("class", "date").text(d.date);
+            const h = event.append("h4");
+            h.append("span")
+                .attr("class", "badge")
+                .style("background-color", d.color)
+                .text(d.group);
+            h.append("span").text(" " + d.headline);
+            event.append("p").text(d.text);
+        });
+    </script>
+</body>
+</html>
